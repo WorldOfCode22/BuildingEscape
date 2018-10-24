@@ -21,17 +21,26 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 
+	Owner = GetOwner();
 	ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
 }
 
 void UOpenDoor::OpenDoor()
 {
 	if (IsDoorOpen) { return; }
-	AActor* Owner = GetOwner();
-	FRotator OwnerRotation = Owner->GetActorRotation();
-	FRotator NewOwnerRoatation = FRotator(OwnerRotation);
+
+	FRotator NewOwnerRoatation = FRotator(Owner->GetActorRotation());
 	NewOwnerRoatation.Yaw += OpenAngel;
 	IsDoorOpen = Owner->SetActorRotation(NewOwnerRoatation);
+}
+
+void UOpenDoor::CloseDoor()
+{
+	if (!IsDoorOpen) { return; }
+
+	FRotator NewOwnerRoatation = FRotator(Owner->GetActorRotation());
+	NewOwnerRoatation.Yaw -= OpenAngel;
+	if (Owner->SetActorRotation(NewOwnerRoatation)) { IsDoorOpen = false; };
 }
 
 
@@ -40,6 +49,11 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (PressurePlate->IsOverlappingActor(ActorThatOpens)) { OpenDoor(); }
+	if (PressurePlate->IsOverlappingActor(ActorThatOpens)) { 
+		OpenDoor(); 
+		LastDoorOpenTime = GetWorld()->GetTimeSeconds();
+	}
+	// close door if current time is greater then LastDoorOpen + delay
+	if (GetWorld()->GetTimeSeconds() > LastDoorOpenTime + DoorCloseDelay) { CloseDoor(); }
 }
 
