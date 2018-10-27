@@ -42,20 +42,19 @@ void UGrabber::SetupInputComponent()
 {
 	/// Find attached physics handler
 	InputHandle = GetOwner()->FindComponentByClass<UInputComponent>();
-	if (InputHandle)
-	{
-		/// Bind key actions to InputHandler
-		InputHandle->BindAction("Grab", IE_Pressed, this, &UGrabber::Grab);
-		InputHandle->BindAction("Grab", IE_Released, this, &UGrabber::Release);
-	}
-	else
+	if (!InputHandle)
 	{
 		UE_LOG(LogTemp, Error,
 			TEXT("%s: Is missing Input Handler"),
 			*GetOwner()->GetName()
 		);
 	}
+
+	/// Bind key actions to InputHandler
+	InputHandle->BindAction("Grab", IE_Pressed, this, &UGrabber::Grab);
+	InputHandle->BindAction("Grab", IE_Released, this, &UGrabber::Release);
 }
+
 // Returns hit result from ray cast
 FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 {
@@ -73,6 +72,7 @@ FHitResult UGrabber::GetFirstPhysicsBodyInReach()
 // called when grab key is pressed
 void UGrabber::Grab()
 {
+	if (!PhysicsHandle) { return; }
 	auto HitResult = GetFirstPhysicsBodyInReach();
 	auto ComponentToGrab = HitResult.GetComponent();
 	auto ActorHit = HitResult.GetActor();
@@ -89,6 +89,7 @@ void UGrabber::Grab()
 // called when grab key is realesed
 void UGrabber::Release()
 {
+	if (!PhysicsHandle) { return; }
 	PhysicsHandle->ReleaseComponent();
 }
 
@@ -125,6 +126,7 @@ FVector UGrabber::GetReachLineEnd()
 void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if (!PhysicsHandle) { return; }
 	if (PhysicsHandle->GrabbedComponent)
 	{
 		PhysicsHandle->SetTargetLocation(GetReachLineEnd());
